@@ -5,6 +5,7 @@
 # println(gs.buildermatrix)
 # println(bcl)
 
+using Distributed 
 @everywhere using gamestate
 @everywhere using player
 @everywhere using inquirer
@@ -31,21 +32,20 @@
     end
     
     function setUpChannelsExecuteParallelRun(gamesPerSession::Int)
-        n = 12
+        num_gaming_sessions = 12
 
         master_state_value_timevisited_dict = Dict{UInt64,Array{Int64,1}}()
         sizehint!(master_state_value_timevisited_dict,10^6)
-        @schedule make_jobs(n); # feed the jobs channel with "n" jobs - this can be async via schedule since workers will wait for jobs anyway
-        for p in workers() # start tasks on the workers to process requests in parallel
-            @async remote_do(initGamingSession, p,gamesPerSession, jobs, results)
+        make_jobs(num_gaming_sessions); # feed the jobs channel with jobs - this can be async via schedule since workers will wait for jobs anyway
+        for worker in workers() # start tasks on the workers to process requests in parallel
+            @async remote_do(initGamingSession, worker, gamesPerSession, jobs, results)
         end
         
-        @elapsed while n > 0 # print out results
+        @elapsed while num_gaming_sessions > 0 # print out results for each gaming session
             state_value_timevisited_dict = take!(results)
-            println("just got a result")
             combine_dicts_from_multi_gaming_sessions!(state_value_timevisited_dict,master_state_value_timevisited_dict)
-            println(length(master_state_value_timevisited_dict))
-            n = n - 1
+            println("unique states visited across all gaming sessions:", length(master_state_value_timevisited_dict))
+            num_gaming_sessions = num_gaming_sessions - 1
         end
 
     end
@@ -77,7 +77,7 @@
                 dupe_states_counter += 1
             end
         end
-        println("newstates:",new_states_counter,"dupe_states:",dupe_states_counter)
+        println("new states this session:",new_states_counter,"dupe states this session:",dupe_states_counter)
         println("% of states from this gaming session that were already in the master tree:",dupe_states_counter/(new_states_counter+dupe_states_counter))
     end
 

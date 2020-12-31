@@ -31,7 +31,7 @@
             new_states_this_game = length(gamingsession.state_Value_Timevisited) - last_size_of_states
             last_size_of_states = length(gamingsession.state_Value_Timevisited)
         end
-        println(string("Number of unique states visited:",length(gamingsession.state_Value_Timevisited)))
+        println(string("Number of unique states visited in this gaming session:",length(gamingsession.state_Value_Timevisited)))
         return gamingsession.state_Value_Timevisited
     end
         

@@ -1,4 +1,3 @@
-
 def main():
     TestE2E().test_runGamingSession()
 
